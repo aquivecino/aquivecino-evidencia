@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AquíVecino · Evidencia</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b1220">
+<style>
+body{margin:0;font-family:system-ui,Arial;background:#0b1220;color:#fff}
+header{padding:14px;text-align:center}
+h1{margin:0;font-size:20px}
+p{margin:6px 0 0;font-size:12px;opacity:.85}
+main{padding:14px}
+textarea{width:100%;min-height:70px;border-radius:10px;border:none;padding:10px;background:#1f2a44;color:#fff}
+button{width:100%;margin-top:12px;padding:14px;border:none;border-radius:12px;background:#2563eb;color:#fff;font-weight:800}
+small{display:block;text-align:center;margin-top:10px;opacity:.7}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AquíVecino · Evidencia</h1>
+  <p>Hecho por Neftali Espinoza Águila</p>
+</header>
+
+<main>
+  <textarea id="note" placeholder="Observación breve (opcional)"></textarea>
+  <button onclick="takePhoto()">📸 Tomar fotografía</button>
+  <small id="status"></small>
+</main>
+
+<input id="camera" type="file" accept="image/*" capture="environment" hidden>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('service-worker.js');
+}
+
+const statusEl=document.getElementById('status');
+const cam=document.getElementById('camera');
+
+function takePhoto(){
+  cam.value="";
+  cam.click();
+}
+
+cam.onchange=()=>{
+  const file=cam.files[0];
+  if(!file){return;}
+  statusEl.textContent="Procesando…";
+  compress(file, async blob=>{
+    navigator.geolocation.getCurrentPosition(async p=>{
+      const msg=`📸 Evidencia\n${document.getElementById('note').value||'Sin observación'}\n📍 https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}`;
+      try{
+        if(navigator.canShare && navigator.canShare({files:[new File([blob],'evidencia.jpg',{type:'image/jpeg'})]})){
+          await navigator.share({text:msg,files:[new File([blob],'evidencia.jpg',{type:'image/jpeg'})]});
+        }else{
+          await navigator.share({text:msg});
+        }
+        statusEl.textContent="Compartido";
+      }catch(e){
+        statusEl.textContent="Compartir cancelado";
+      }
+    },()=>statusEl.textContent="Ubicación no disponible");
+  });
+};
+
+function compress(file,cb){
+  const img=new Image(); const r=new FileReader();
+  r.onload=e=>{
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      const max=1280; let w=img.width,h=img.height;
+      if(w>h&&w>max){h*=max/w;w=max}
+      if(h>w&&h>max){w*=max/h;h=max}
+      c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      c.toBlob(cb,'image/jpeg',0.7);
+    };
+    img.src=e.target.result;
+  };
+  r.readAsDataURL(file);
+}
+</script>
+</body>
+</html>
