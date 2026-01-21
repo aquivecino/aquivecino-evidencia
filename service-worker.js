@@ -1,14 +1,14 @@
-const CACHE = "av-evidencia-v3";
+const CACHE = "av-evidencia-v4";
 
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE).then(c =>
       c.addAll([
-        "./",
-        "./index.html",
-        "./manifest.json",
-        "./icon-192.png",
-        "./icon-512.png"
+        "/aquivecino-evidencia/",
+        "/aquivecino-evidencia/index.html",
+        "/aquivecino-evidencia/manifest.json",
+        "/aquivecino-evidencia/icon-192.png",
+        "/aquivecino-evidencia/icon-512.png"
       ])
     )
   );
